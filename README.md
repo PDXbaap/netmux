@@ -1,4 +1,4 @@
-# PDX multiplexer, an HTTP-CONNECT based TCP multiplexer
+# PDX chainmux, an HTTP-CONNECT based TCP multiplexer
 
 This service enables a blockchain node to have all of its 
 TCP endpoints behind this single "external" facing HTTP 
