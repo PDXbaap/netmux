@@ -27,7 +27,7 @@ type rewriteRules struct {
 	data map[string]string
 }
 
-
+var port string
 var fconf string
 
 var rules = rewriteRules{data:make(map[string]string)}
@@ -136,9 +136,10 @@ func handleHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if strings.EqualFold(r.RequestURI, "http://localhost:5978/chainmux/reconf") &&
+	if strings.EqualFold(r.RequestURI, "http://localhost:" + port + "/chainmux/reconf") &&
 		strings.HasPrefix(r.RemoteAddr, "127.0.0.1:") {
-			loadRules()
+                log.Println("reloading rewrite conf file")
+		loadRules()
 		return
 	}
 
@@ -195,7 +196,7 @@ func main() {
 		fmt.Println("			conn://chain-x:30303 localhost:30308")
 		fmt.Println("			http://pdx.ltd:80 localhost:80")
 		fmt.Println("")
-		fmt.Println("-port		The [host]:port chainmux listens on")
+		fmt.Println("-addr		The [host]:port chainmux listens on")
 		fmt.Println("")
                 fmt.Println("Please visit https://github.com/PDXbaap/chainmux to get the latest version.")
 		fmt.Println("")
@@ -203,8 +204,13 @@ func main() {
 
 	flag.StringVar(&fconf, "conf", "", "conf file for CONNECT redirect")
 
-	var port string
-	flag.StringVar(&port, "addr", ":5978","proxy listening address, in host:port format")
+	var addr string
+	flag.StringVar(&addr, "addr", ":5978","proxy listening address, in host:addr format")
+
+	data := strings.Split(addr, ":")
+	if len(data) == 2 {
+		port = data[1]
+	}
 
 	flag.Parse()
 
@@ -218,7 +224,7 @@ func main() {
 		//ReadTimeout:  10 * time.Second,
 		//WriteTimeout: 10 * time.Second,
 		//IdleTimeout:  10 * time.Second,
-		Addr: port,
+		Addr: addr,
 		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if r.Method == http.MethodConnect {
 				handleTunneling(w, r)
