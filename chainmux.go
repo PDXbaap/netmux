@@ -27,19 +27,22 @@ type rewriteRules struct {
 	data map[string]string
 }
 
+
+var fconf string
+
 var rules = rewriteRules{data:make(map[string]string)}
 
-func loadRules(conf string) {
+func loadRules() {
 
-	file, err := os.OpenFile(conf, os.O_RDONLY, os.ModeExclusive)
+	file, err := os.OpenFile(fconf, os.O_RDONLY, os.ModeExclusive)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer file.Close()
 
-	scanner := bufio.NewScanner(file)
+	data := make(map[string]string)
 
-	rules.lock.Lock()
+	scanner := bufio.NewScanner(file)
 
 	for scanner.Scan() {
 
@@ -57,19 +60,22 @@ func loadRules(conf string) {
 			el[1] = strings.TrimSpace(el[1])
 
 			if el[0] != "" && el[1] != "" {
-				rules.data[el[0]] = el[1]
+				data[el[0]] = el[1]
 			}
 		}
 	}
 
-	rules.lock.Unlock()
-
 	if err := scanner.Err(); err != nil {
 		log.Fatal(err)
 	}
+
+
+	rules.lock.Lock()
+		rules.data = data
+	rules.lock.Unlock()
 }
 
-func rewriteTo(conf string, asked string) string {
+func rewriteTo(asked string) string {
 
 	asked = strings.TrimSpace(asked)
 
@@ -85,9 +91,9 @@ func rewriteTo(conf string, asked string) string {
 	return ""
 }
 
-func handleTunneling(conf string, w http.ResponseWriter, r *http.Request) {
+func handleTunneling(w http.ResponseWriter, r *http.Request) {
 
-	dst := rewriteTo(conf, "conn://" + r.RequestURI)
+	dst := rewriteTo("conn://" + r.RequestURI)
 
 	log.Println("CONN: requested ", r.RequestURI, ", redirected to:", dst)
 
@@ -121,12 +127,18 @@ func transfer(dst io.WriteCloser, src io.ReadCloser) {
 	io.Copy(dst, src)
 }
 
-func handleHTTP(conf string, w http.ResponseWriter, r *http.Request) {
+func handleHTTP(w http.ResponseWriter, r *http.Request) {
 
 	url, err := url.Parse(r.RequestURI)
 
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if strings.EqualFold(r.RequestURI, "http://localhost:5978/chainmux/reconf") &&
+		strings.HasPrefix(r.RemoteAddr, "127.0.0.1:") {
+			loadRules()
 		return
 	}
 
@@ -137,7 +149,7 @@ func handleHTTP(conf string, w http.ResponseWriter, r *http.Request) {
 		asked += ":80"
 	}
 
-	dst := rewriteTo(conf, asked) //host:port
+	dst := rewriteTo(asked) //host:port
 	if dst == "" {
 		http.Error(w, r.RequestURI + " is not allowed", http.StatusServiceUnavailable)
 		return
@@ -189,19 +201,18 @@ func main() {
 		fmt.Println("")
 	}
 
-	var conf string
-	flag.StringVar(&conf, "conf", "", "conf file for CONNECT redirect")
+	flag.StringVar(&fconf, "conf", "", "conf file for CONNECT redirect")
 
 	var port string
 	flag.StringVar(&port, "addr", ":5978","proxy listening address, in host:port format")
 
 	flag.Parse()
 
-	if conf == "" {
-		conf = os.Getenv("PDX_CHAINMUX_CONF_FILE")
+	if fconf == "" {
+		fconf = os.Getenv("PDX_CHAINMUX_CONF_FILE")
 	}
 
-	loadRules(conf)
+	loadRules()
 
 	server := &http.Server{
 		//ReadTimeout:  10 * time.Second,
@@ -210,9 +221,9 @@ func main() {
 		Addr: port,
 		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if r.Method == http.MethodConnect {
-				handleTunneling(conf, w, r)
+				handleTunneling(w, r)
 			} else {
-				handleHTTP(conf, w, r)
+				handleHTTP(w, r)
 			}
 		}),}
 
