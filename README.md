@@ -1,4 +1,4 @@
-# PDX chainmux, a lightweight, whitelist-protected HTTP & TCP proxy  
+# PDX chainmux, a lightweight whitelist-protected HTTP & TCP proxy  
 
 This is a general purpose lightweight, whitelist-protected HTTP & TCP
 proxy server.
