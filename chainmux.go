@@ -1,9 +1,26 @@
+// Copyright 2017 The PDX Blockchain Hybercloud Authors
+// This file is part of the PDX chainmux implementation.
+//
+// The PDX Blcockchain Hypercloud is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Lesser General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// The PDX Blockchain Hypercloud is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// GNU Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU Lesser General Public License
+// along with the software. If not, see <http://www.gnu.org/licenses/>.
+
+
 /**
  * PDX chainmux, an HTTP-CONNECT based, whitelisted TCP multiplexer service
  *
  * Credit to https://medium.com/@mlowicki for the original https-proxy work
  */
- 
+
 package main
 
 import (
@@ -197,17 +214,24 @@ func main() {
 
 	flag.Usage = func() {
 		fmt.Println("")
-		fmt.Println("PDX chainmux, an HTTP-CONNECT based, whitelisted rewritable HTTP & TCP proxy")
+		fmt.Println("PDX chainmux, a lightweight HTTP & TCP service multiplexer, ver. 1.0")
 		fmt.Println("")
-		fmt.Println("-conf		The configuration file. Or via PDX_CHAINMUX_CONF_FILE environment variable")
-		fmt.Println("		One line for each whitelist item, first match is selected.")
-		fmt.Println("		Config format: proto://asked_host:asked_port \\t target_host:target_port\\n")
-		fmt.Println("		Here, proto is conn for HTTP-CONNECT based tunneling, http for  http proxy")
-		fmt.Println("		For example,")
-		fmt.Println("			conn://chain-x:30303 localhost:30308")
-		fmt.Println("			http://pdx.ltd:80 localhost:80")
+		fmt.Println("-conf	The configuration file. Or via PDX_CHAINMUX_CONF_FILE environment variable")
 		fmt.Println("")
-		fmt.Println("-addr		The [host]:port chainmux listens on")
+		fmt.Println("	Configuration file syntax:")
+		fmt.Println("		1) One line for each access granted (as-is or rewrite), honoring the first match")
+		fmt.Println("		2) Line format: proto://request_host:request_port \\t [service_host:service_port]\\n")
+		fmt.Println("		3) proto is conn for HTTP-CONNECT based tunneling, http for http proxy.")
+		fmt.Println("		4) proto://request_host:request_port can be a glob match pattern")
+		fmt.Println("		5) If no rewrite is desired, no service_host:service_port should be specified")
+		fmt.Println("		6) A comment line (one starts with #) or an empty line is ignored by the parser.")
+		fmt.Println("")
+		fmt.Println("	For example,")
+		fmt.Println("		conn://chain-x:30303 localhost:30308")
+		fmt.Println("		http://view.pdx.ltd:80 http://localhost:8080")
+		fmt.Println("		http://chain.pdx.link*")
+		fmt.Println("")
+		fmt.Println("-addr	The [host]:port chainmux listens on")
 		fmt.Println("")
                 fmt.Println("Please visit https://github.com/PDXbaap/chainmux to get the latest version.")
 		fmt.Println("")

@@ -1,10 +1,10 @@
-# PDX chainmux, a lightweight HTTP & TCP proxy server
+# PDX chainmux, a lightweight HTTP & TCP service multiplexer
 
 In the PDX blockchain hypercloud, it enables a blockchain node to have
 all of its HTTP & TCP endpoints behind this single "external" facing 
 HTTP endpoint, so that firewall traversal is less painful.
 
-The exact-matching whitelist approach effectively protects a node from 
+The glob-matching whitelist approach effectively protects a node from 
 inadvertently exposing unwanted services. 
 
 With rewrite, a node's internal network and endpoint details can be 
