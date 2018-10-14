@@ -18,9 +18,18 @@ import (
 	"bufio"
 	"strings"
 	"fmt"
+	"sync"
 )
 
-func rewriteTo(conf string, asked string) string {
+type rewriteRules struct {
+
+	lock  sync.Mutex
+	data map[string]string
+}
+
+var rules = rewriteRules{data:make(map[string]string)}
+
+func loadRules(conf string) {
 
 	file, err := os.OpenFile(conf, os.O_RDONLY, os.ModeExclusive)
 	if err != nil {
@@ -29,17 +38,34 @@ func rewriteTo(conf string, asked string) string {
 	defer file.Close()
 
 	scanner := bufio.NewScanner(file)
+
+	rules.lock.Lock()
+
 	for scanner.Scan() {
-		text := scanner.Text()
-		if strings.HasPrefix(text, asked) {
-			asked = text[len(asked):]
-			asked = strings.TrimSpace(asked)
-			return asked
+		el := strings.Fields(scanner.Text())
+		if len(el) == 2 && el[0] != "" && el[1] != "" {
+			rules.data[strings.TrimSpace(el[0])] = strings.TrimSpace(el[1])
 		}
 	}
 
+	rules.lock.Unlock()
+
 	if err := scanner.Err(); err != nil {
 		log.Fatal(err)
+	}
+}
+
+func rewriteTo(conf string, asked string) string {
+
+	asked = strings.TrimSpace(asked)
+
+	rules.lock.Lock()
+	defer rules.lock.Unlock()
+
+	for k,v := range rules.data {
+		if strings.EqualFold(k, asked) {
+			return v
+		}
 	}
 
 	return ""
@@ -160,6 +186,8 @@ func main() {
 	if conf == "" {
 		conf = os.Getenv("PDX_CHAINMUX_CONF_FILE")
 	}
+
+	loadRules(conf)
 
 	server := &http.Server{
 		//ReadTimeout:  10 * time.Second,
