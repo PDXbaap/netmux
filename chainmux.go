@@ -42,9 +42,23 @@ func loadRules(conf string) {
 	rules.lock.Lock()
 
 	for scanner.Scan() {
+
+		text := scanner.Text()
+
+		if strings.HasPrefix(text, "#") {
+			continue
+		}
+
 		el := strings.Fields(scanner.Text())
-		if len(el) == 2 && el[0] != "" && el[1] != "" {
-			rules.data[strings.TrimSpace(el[0])] = strings.TrimSpace(el[1])
+
+		if len(el) == 2 {
+
+			el[0] = strings.TrimSpace(el[0])
+			el[1] = strings.TrimSpace(el[1])
+
+			if el[0] != "" && el[1] != "" {
+				rules.data[el[0]] = el[1]
+			}
 		}
 	}
 
