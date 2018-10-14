@@ -15,11 +15,8 @@
 // along with the software. If not, see <http://www.gnu.org/licenses/>.
 
 
-/**
- * PDX chainmux, an HTTP-CONNECT based, whitelisted TCP multiplexer service
- *
- * Credit to https://medium.com/@mlowicki for the original https-proxy work
- */
+// PDX chainmux, a lighweight whitelist-protected TCP & HTTP proxy service
+// Credit to https://medium.com/@mlowicki for the original https-proxy work
 
 package main
 
@@ -164,9 +161,9 @@ func handleHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if strings.EqualFold(r.RequestURI, "http://localhost:" + port + "/chainmux/reconf") &&
+	if strings.EqualFold(r.RequestURI, "/chainmux/reconf") &&
 		strings.HasPrefix(r.RemoteAddr, "127.0.0.1:") {
-                log.Println("reloading rewrite conf file")
+		log.Println("reloading rewrite conf file")
 		loadRules()
 		return
 	}
@@ -214,9 +211,10 @@ func main() {
 
 	flag.Usage = func() {
 		fmt.Println("")
-		fmt.Println("PDX chainmux, a lightweight HTTP & TCP service multiplexer, ver. 1.0")
+		fmt.Println("PDX chainmux, a lighweight whitelist-protected TCP & HTTP proxy service, ver. 1.0")
 		fmt.Println("")
-		fmt.Println("-conf	The configuration file. Or via PDX_CHAINMUX_CONF_FILE environment variable")
+		fmt.Println("-conf	The configuration file. Or set via the PDX_CHAINMUX_CONF_FILE environment variable.")
+		fmt.Println("	Call http://localhost:{port}/chainmux/reconf to reload it on configuration change.")
 		fmt.Println("")
 		fmt.Println("	Configuration file syntax:")
 		fmt.Println("		1) One line for each access granted (as-is or rewrite), honoring the first match")
@@ -251,6 +249,11 @@ func main() {
 
 	if fconf == "" {
 		fconf = os.Getenv("PDX_CHAINMUX_CONF_FILE")
+	}
+
+	if fconf == "" {
+		log.Fatalln("no configuration file is specified, panic now")
+		panic("")
 	}
 
 	loadRules()
