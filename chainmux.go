@@ -19,6 +19,7 @@ import (
 	"strings"
 	"fmt"
 	"sync"
+	"path/filepath"
 )
 
 type rewriteRules struct {
@@ -54,14 +55,17 @@ func loadRules() {
 
 		el := strings.Fields(scanner.Text())
 
-		if len(el) == 2 {
+		if el == nil || len(el) <= 0 || len(el) > 2 {
+			continue
+		}
 
-			el[0] = strings.TrimSpace(el[0])
-			el[1] = strings.TrimSpace(el[1])
+		if len(el) == 1 { //allow
 
-			if el[0] != "" && el[1] != "" {
-				data[el[0]] = el[1]
-			}
+			data[el[0]] = el[0]
+
+		} else if len(el) == 2 { //rewrite
+
+			data[el[0]] = el[1]
 		}
 	}
 
@@ -83,8 +87,15 @@ func rewriteTo(asked string) string {
 	defer rules.lock.Unlock()
 
 	for k,v := range rules.data {
-		if strings.EqualFold(k, asked) {
-			return v
+
+		matched, error := filepath.Match(k, asked)
+
+		if error == nil && matched {
+			if strings.EqualFold(k,v) {//allowed
+				return asked
+			} else { //rewrite
+				return v
+			}
 		}
 	}
 
