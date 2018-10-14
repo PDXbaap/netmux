@@ -1,4 +1,4 @@
-# PDX chainmux, a lightweight general purpose HTTP & TCP proxy  
+# PDX chainmux, a lightweight HTTP & TCP proxy server
 
 In the PDX blockchain hypercloud, it enables a blockchain node to have
 all of its HTTP & TCP endpoints behind this single "external" facing 
