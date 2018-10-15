@@ -42,7 +42,6 @@ type rewriteRules struct {
 	data map[string]string
 }
 
-var port string
 var fconf string
 
 var rules = rewriteRules{data:make(map[string]string)}
@@ -240,11 +239,6 @@ func main() {
 	var addr string
 	flag.StringVar(&addr, "addr", ":5978","proxy listening address, in host:addr format")
 
-	data := strings.Split(addr, ":")
-	if len(data) == 2 {
-		port = data[1]
-	}
-
 	flag.Parse()
 
 	if fconf == "" {
@@ -252,8 +246,8 @@ func main() {
 	}
 
 	if fconf == "" {
-		log.Fatalln("no configuration file is specified, panic now")
-		panic("")
+		log.Fatalln("no configuration file is specified, exiting")
+		os.Exit(-1)
 	}
 
 	loadRules()
@@ -276,4 +270,6 @@ func main() {
 	log.Fatal(server.ListenAndServe())
 
 	log.Println("shutdown PDX chainmux")
+
+	os.Exit(0)
 }
