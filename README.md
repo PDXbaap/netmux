@@ -1,4 +1,4 @@
-# PDX chainmux, a lighweight whitelist-protected TCP & HTTP proxy 
+# PDX chainmux, a lightweight whitelist-protected TCP & HTTP proxy 
 
 In the PDX blockchain hypercloud, it enables a blockchain node to have
 all of its HTTP & TCP endpoints behind this single "external" facing 
